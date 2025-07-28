@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker build:*)",
+      "Bash(systemctl status:*)",
+      "Bash(docker run:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": []
+  }
+}

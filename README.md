@@ -14,6 +14,7 @@ Docker images based on Ubuntu 16.04 with modern build tools for GitHub Actions a
 - **CMake v3.20.5** - Modern CMake build system
 - **OpenJDK 8** - Java development kit
 - **Multiple Python versions** - Python 3.13.6, 3.12.9, 3.11.13, 3.10.18 (compiled from source with optimizations)
+- **PyPy versions** - PyPy 3.10 v7.3.19, PyPy 3.11 v7.3.20 (high-performance Python implementations)
 - **SDL v2.32.8** - Static library for multimedia, games, and cross-platform development (compiled from source)
 - **Build essentials** - GCC, Make, and compilation tools
 - **Development libraries**:
@@ -102,6 +103,7 @@ docker build --platform=linux/386 -f Dockerfile.i386 -t ubuntu16-modern:i386 .
 | CMake | v3.20.5 | v3.20.5 |
 | OpenJDK | 8 | 8 |
 | Python | 3.13.6, 3.12.9, 3.11.13, 3.10.18 | 3.13.6, 3.12.9, 3.11.13, 3.10.18 |
+| PyPy | 3.10 v7.3.19, 3.11 v7.3.20 | 3.10 v7.3.19, 3.11 v7.3.20 |
 | SDL | v2.32.8 | v2.32.8 |
 | All dev libraries | ✅ | ✅ |
 

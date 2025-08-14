@@ -43,11 +43,13 @@ docker run -it \
 - **Git**: v2.47.1 (from git-core PPA)
 - **CMake**: v3.20.5 (from Kitware repositories)
 - **Java**: OpenJDK 8
-- **Docker CLI**: Included in 64-bit only (not available for 32-bit)
+- **Python**: Multiple versions (3.13.6, 3.12.9, 3.11.13, 3.10.18) compiled from source
+- **PyPy**: High-performance Python implementations (3.10 v7.3.19, 3.11 v7.3.20)
+- **SDL**: v2.32.8 static library for multimedia/game development
 
 ### Key Differences Between Dockerfiles
-- `Dockerfile`: 64-bit build with Docker CLI support
-- `Dockerfile.i386`: 32-bit build, skips Docker CLI installation
+- `Dockerfile`: 64-bit build  
+- `Dockerfile.i386`: 32-bit build
 - Both include the same development libraries and tools
 
 ### CI/CD Integration

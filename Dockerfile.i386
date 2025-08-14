@@ -57,6 +57,16 @@ RUN apt-get update && apt-get install -y build-essential zlib1g-dev libncurses-d
     done && \
     rm -rf /var/lib/apt/lists/*
 
+# Install SDL
+RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.8.tar.gz \
+    && tar xvfz release-2.32.8.tar.gz \
+    && mkdir build \
+    && cd build \
+    && cmake ../SDL-release-2.32.8 -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build . --config Release \
+    && cmake --install . \
+    && cd .. && rm -rf build SDL-release-2.32.8 release-2.32.8.tar.gz
+
 # Set working directory
 WORKDIR /workspace
 

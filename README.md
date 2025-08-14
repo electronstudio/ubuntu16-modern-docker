@@ -13,6 +13,7 @@ Docker images based on Ubuntu 16.04 with modern build tools for GitHub Actions a
 - **Git v2.47.1** - Latest Git version
 - **CMake v3.20.5** - Modern CMake build system
 - **OpenJDK 8** - Java development kit
+- **Multiple Python versions** - Python 3.13.6, 3.12.9, 3.11.13, 3.10.18 (compiled from source with optimizations)
 - **Build essentials** - GCC, Make, and compilation tools
 - **Development libraries**:
   - OpenGL (libgl1-mesa-dev, libglu1-mesa-dev)
@@ -40,6 +41,7 @@ jobs:
         run: |
           node --version
           java -version
+          python3.13 --version
           # Your build commands here
 
   build-32bit:
@@ -51,6 +53,7 @@ jobs:
         run: |
           node --version
           java -version
+          python3.13 --version
           # Your build commands here
 ```
 
@@ -97,6 +100,7 @@ docker build --platform=linux/386 -f Dockerfile.i386 -t ubuntu16-modern:i386 .
 | Git | v2.47.1 | v2.47.1 |
 | CMake | v3.20.5 | v3.20.5 |
 | OpenJDK | 8 | 8 |
+| Python | 3.13.6, 3.12.9, 3.11.13, 3.10.18 | 3.13.6, 3.12.9, 3.11.13, 3.10.18 |
 | Docker CLI | ✅ | ❌ (not available) |
 | All dev libraries | ✅ | ✅ |
 

@@ -29,19 +29,10 @@ RUN apt-get update && apt-get install -y \
 # Install Node.js 20 (unofficial build compatible with glibc 2.17)
 RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v20.18.1/node-v20.18.1-linux-x64-glibc-217.tar.gz | tar -xz -C /usr/local --strip-components=1
 
-# Skip Python installation for now
-
 # Install newer Git (via PPA)
 RUN add-apt-repository ppa:git-core/ppa \
     && apt-get update \
     && apt-get install -y git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Docker CLI (for Docker-in-Docker scenarios)
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
-    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable" \
-    && apt-get update \
-    && apt-get install -y docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Install modern CMake
@@ -50,6 +41,21 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key 
     && apt-get update \
     && apt-get install -y cmake \
     && rm -rf /var/lib/apt/lists/*
+
+# Install multiple Python versions
+ARG PYTHON_VERSIONS="3.13.6 3.12.9 3.11.13 3.10.18"
+RUN apt-get update && apt-get install -y build-essential zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libssl-dev libreadline6-dev libffi-dev libsqlite3-dev wget libbz2-dev && \
+    for version in $PYTHON_VERSIONS; do \
+        wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
+        tar -xf Python-$version.tgz && \
+        cd Python-$version && \
+        ./configure --enable-optimizations && \
+        make -j 8 && \
+        make altinstall && \
+        cd .. && \
+        rm -rf Python-$version*; \
+    done && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /workspace

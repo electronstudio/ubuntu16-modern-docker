@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y \
     apt-transport-https \
     gnupg \
     lsb-release \
+    libgles2-mesa-dev \
+    zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20 (unofficial build compatible with glibc 2.17)
@@ -44,8 +46,7 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key 
 
 # Install multiple Python versions
 ARG PYTHON_VERSIONS="3.13.6 3.12.9 3.11.13 3.10.18"
-RUN apt-get update && apt-get install -y build-essential zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libssl-dev libreadline6-dev libffi-dev libsqlite3-dev wget libbz2-dev && \
-    for version in $PYTHON_VERSIONS; do \
+RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \
         cd Python-$version && \
@@ -54,8 +55,7 @@ RUN apt-get update && apt-get install -y build-essential zlib1g-dev libncurses-d
         make altinstall && \
         cd .. && \
         rm -rf Python-$version*; \
-    done && \
-    rm -rf /var/lib/apt/lists/*
+    done
 
 # Install SDL
 RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.8.tar.gz \

@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     lsb-release \
     libgles2-mesa-dev \
-    zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev \
+    zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev libgbm-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20 (32-bit unofficial build)

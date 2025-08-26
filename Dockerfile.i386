@@ -76,13 +76,19 @@ RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.8.tar.
     && cmake --install . \
     && cd .. && rm -rf build SDL-release-2.32.8 release-2.32.8.tar.gz
 
+# Install 32-bit compatibility libraries
+RUN dpkg --add-architecture i386 \
+    && apt-get update \
+    && apt-get install -y libc6:i386 zlib1g:i386 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install PyPy 3.10 and 3.11
 RUN wget https://downloads.python.org/pypy/pypy3.10-v7.3.19-linux32.tar.bz2 \
     && wget https://downloads.python.org/pypy/pypy3.11-v7.3.20-linux32.tar.bz2 \
     && tar -xjf pypy3.10-v7.3.19-linux32.tar.bz2 -C /opt \
     && tar -xjf pypy3.11-v7.3.20-linux32.tar.bz2 -C /opt \
-    && ln -s /opt/pypy3.10-v7.3.19-linux32/bin/pypy3 /usr/local/bin/pypy3.10 \
-    && ln -s /opt/pypy3.11-v7.3.20-linux32/bin/pypy3 /usr/local/bin/pypy3.11 \
+    && ln -s /opt/pypy3.10-v7.3.19-linux32/bin/pypy3.10 /usr/local/bin/pypy3.10 \
+    && ln -s /opt/pypy3.11-v7.3.20-linux32/bin/pypy3.11 /usr/local/bin/pypy3.11 \
     && /usr/local/bin/pypy3.10 -m ensurepip \
     && /usr/local/bin/pypy3.11 -m ensurepip \
     && ln -s /opt/pypy3.10-v7.3.19-linux32/bin/pip3 /usr/local/bin/pip-pypy3.10 \

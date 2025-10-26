@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     ca-certificates \
     unzip \
+    pkg-config \
     libasound2-dev \
     mesa-common-dev \
     libx11-dev \
@@ -54,7 +55,7 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key 
     && rm -rf /var/lib/apt/lists/*
 
 # Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.13.6 3.12.9 3.11.13 3.10.18"
+ARG PYTHON_VERSIONS="3.14.0 3.13.6 3.12.9"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \

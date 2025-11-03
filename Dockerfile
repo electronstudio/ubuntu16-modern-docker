@@ -55,7 +55,7 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key 
     && rm -rf /var/lib/apt/lists/*
 
 # Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.14.0 3.13.6 3.12.9"
+ARG PYTHON_VERSIONS="3.14.0 3.13.9 3.12.9 3.11.14 3.10.19 3.9.25 3.8.20 3.7.17"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \
@@ -68,7 +68,7 @@ RUN for version in $PYTHON_VERSIONS; do \
     done
 
 # Install SDL
-RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.8.tar.gz \
+RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.10.tar.gz \
     && tar xvfz release-2.32.8.tar.gz \
     && mkdir build \
     && cd build \

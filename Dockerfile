@@ -55,7 +55,7 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key 
     && rm -rf /var/lib/apt/lists/*
 
 # Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.14.0 3.13.6 3.12.9"
+ARG PYTHON_VERSIONS="3.14.0 3.13.9 3.12.9 3.11.14 3.10.19 3.9.25 3.8.20 3.7.17"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \
@@ -68,14 +68,15 @@ RUN for version in $PYTHON_VERSIONS; do \
     done
 
 # Install SDL
-RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.8.tar.gz \
-    && tar xvfz release-2.32.8.tar.gz \
+ARG SDL_VERSION="2.32.10"
+RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-$SDL_VERSION.tar.gz \
+    && tar xvfz release-$SDL_VERSION.tar.gz \
     && mkdir build \
     && cd build \
-    && cmake ../SDL-release-2.32.8 -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake ../SDL-release-$SDL_VERSION -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release \
     && cmake --build . --config Release \
     && cmake --install . \
-    && cd .. && rm -rf build SDL-release-2.32.8 release-2.32.8.tar.gz
+    && cd .. && rm -rf build SDL-release-$SDL_VERSION release-$SDL_VERSION.tar.gz
 
 # Install PyPy 3.10 and 3.11
 RUN wget https://downloads.python.org/pypy/pypy3.10-v7.3.19-linux64.tar.bz2 \

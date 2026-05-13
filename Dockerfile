@@ -48,14 +48,19 @@ RUN add-apt-repository ppa:git-core/ppa \
     && rm -rf /var/lib/apt/lists/*
 
 # Install modern CMake
-RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key add - \
-    && echo 'deb https://apt.kitware.com/ubuntu/ xenial main' | tee /etc/apt/sources.list.d/kitware.list \
-    && apt-get update \
-    && apt-get install -y cmake \
-    && rm -rf /var/lib/apt/lists/*
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.31.10/cmake-3.31.10-linux-x86_64.tar.gz \
+    && tar xvfz cmake-3.31.10-linux-x86_64.tar.gz \
+    && cp -r cmake-3.31.10-linux-x86_64/* /usr/
+
+# Install Go
+ARG GO_VERSION="1.26.3"
+RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz \
+    && rm go${GO_VERSION}.linux-amd64.tar.gz
+ENV PATH=$PATH:/usr/local/go/bin
 
 # Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.14.0 3.13.9 3.12.9 3.11.14 3.10.19 3.9.25 3.8.20 3.7.17"
+ARG PYTHON_VERSIONS="3.14.5 3.13.9 3.12.9 3.11.14 3.10.19 3.9.25 3.8.20 3.7.17"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \

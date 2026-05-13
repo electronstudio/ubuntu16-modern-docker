@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI agents when working with code in this repository.
 
 ## Project Overview
 
@@ -44,6 +44,7 @@ docker run -it \
 - **CMake**: v3.20.5 (from Kitware repositories)
 - **Java**: OpenJDK 8
 - **Python**: Multiple versions (3.13.6, 3.12.9, 3.11.13, 3.10.18) compiled from source
+- **Go**: v1.26.3 (pre-built binary from golang.org)
 - **PyPy**: High-performance Python implementations (3.10 v7.3.19, 3.11 v7.3.20)
 - **SDL**: v2.32.8 static library for multimedia/game development
 

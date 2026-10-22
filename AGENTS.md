@@ -39,14 +39,15 @@ docker run -it \
 
 ### Container Images
 - **Base**: Ubuntu 16.04 (xenial) for compatibility with older systems
-- **Node.js**: v20.18.1 (unofficial builds compatible with glibc 2.17)
+- **Node.js**: v26.10.0 on 64-bit (unofficial build compatible with glibc 2.17; last release shipping a `linux-x64-glibc-217` tarball), v20.18.1 on 32-bit
 - **Git**: v2.47.1 (from git-core PPA)
-- **CMake**: v3.20.5 (from Kitware repositories)
+- **CMake**: v3.31.12 (from Kitware repositories)
 - **Java**: OpenJDK 8
-- **Python**: Multiple versions (3.13.6, 3.12.9, 3.11.13, 3.10.18) compiled from source
-- **Go**: v1.26.3 (pre-built binary from golang.org)
+- **OpenSSL**: 1.1.1zh (kzalewski fork with backported security fixes)
+- **Python**: Multiple versions (3.15.0, 3.14.9, 3.13.17, 3.12.15, 3.11.17, 3.10.22, 3.9.25, 3.8.20, 3.7.17) compiled from source
+- **Go**: v1.26.10 (pre-built binary from golang.org)
 - **PyPy**: High-performance Python implementations (3.10 v7.3.19, 3.11 v7.3.20)
-- **SDL**: v2.32.8 static library for multimedia/game development
+- **SDL**: v2.32.10 static library for multimedia/game development
 
 ### Key Differences Between Dockerfiles
 - `Dockerfile`: 64-bit build  

@@ -41,14 +41,14 @@ RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v20.18.1/no
 
 
 # Install modern CMake
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.31.10/cmake-3.31.10-linux-x86_64.tar.gz \
-    && tar xvfz cmake-3.31.10-linux-x86_64.tar.gz \
-    && cp -r cmake-3.31.10-linux-x86_64/* /usr/
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz \
+    && tar xvfz cmake-3.31.12-linux-x86_64.tar.gz \
+    && cp -r cmake-3.31.12-linux-x86_64/* /usr/
 
-# Compile and install OpenSSL 1.1.1 from source
-RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz \
-    && tar -xzf openssl-1.1.1w.tar.gz \
-    && cd openssl-1.1.1w \
+# Compile and install OpenSSL 1.1.1 from source (kzalewski fork: 1.1.1zh with backported security fixes)
+RUN wget https://github.com/kzalewski/openssl-1.1.1/archive/refs/tags/1.1.1zh.tar.gz -O openssl-1.1.1zh.tar.gz \
+    && tar -xzf openssl-1.1.1zh.tar.gz \
+    && cd openssl-1.1.1-1.1.1zh \
     && setarch i386 ./config \
     && make -j$(nproc) \
     && make install_sw install_ssldirs \
@@ -57,7 +57,7 @@ RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/ope
 
 
 # Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.14.5 3.13.9 3.12.9 3.11.14 3.10.19 3.9.25 3.8.20 3.7.17"
+ARG PYTHON_VERSIONS="3.15.0 3.14.9 3.13.17 3.12.15 3.11.17 3.10.22 3.9.25 3.8.20 3.7.17"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \
@@ -94,7 +94,7 @@ RUN wget https://downloads.python.org/pypy/pypy3.10-v7.3.19-linux32.tar.bz2 \
     && rm pypy3.10-v7.3.19-linux32.tar.bz2 pypy3.11-v7.3.20-linux32.tar.bz2
 
 # Install Go
-ARG GO_VERSION="1.26.3"
+ARG GO_VERSION="1.26.10"
 RUN wget https://go.dev/dl/go${GO_VERSION}.linux-386.tar.gz \
     && tar -C /usr/local -xzf go${GO_VERSION}.linux-386.tar.gz \
     && rm go${GO_VERSION}.linux-386.tar.gz

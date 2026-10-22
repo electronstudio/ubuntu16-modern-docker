@@ -28,18 +28,19 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev libgbm-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Compile and install OpenSSL 1.1.1 from source
-RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz \
-    && tar -xzf openssl-1.1.1w.tar.gz \
-    && cd openssl-1.1.1w \
+# Compile and install OpenSSL 1.1.1 from source (kzalewski fork: 1.1.1zh with backported security fixes)
+RUN wget https://github.com/kzalewski/openssl-1.1.1/archive/refs/tags/1.1.1zh.tar.gz -O openssl-1.1.1zh.tar.gz \
+    && tar -xzf openssl-1.1.1zh.tar.gz \
+    && cd openssl-1.1.1-1.1.1zh \
     && ./config \
     && make -j$(nproc) \
     && make install_sw install_ssldirs \
     && ldconfig \
     && cd .. && rm -rf openssl-1.1.1*
 
-# Install Node.js 20 (unofficial build compatible with glibc 2.17)
-RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v20.18.1/node-v20.18.1-linux-x64-glibc-217.tar.gz | tar -xz -C /usr/local --strip-components=1
+# Install Node.js 26 (unofficial build compatible with glibc 2.17)
+# NOTE: v26.10.0 is the last release shipping a linux-x64-glibc-217 build; v26.11.0+ dropped it.
+RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v26.10.0/node-v26.10.0-linux-x64-glibc-217.tar.xz | tar -xJ -C /usr/local --strip-components=1
 
 # Install newer Git (via PPA)
 RUN add-apt-repository ppa:git-core/ppa \
@@ -48,19 +49,19 @@ RUN add-apt-repository ppa:git-core/ppa \
     && rm -rf /var/lib/apt/lists/*
 
 # Install modern CMake
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.31.10/cmake-3.31.10-linux-x86_64.tar.gz \
-    && tar xvfz cmake-3.31.10-linux-x86_64.tar.gz \
-    && cp -r cmake-3.31.10-linux-x86_64/* /usr/
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz \
+    && tar xvfz cmake-3.31.12-linux-x86_64.tar.gz \
+    && cp -r cmake-3.31.12-linux-x86_64/* /usr/
 
 # Install Go
-ARG GO_VERSION="1.26.3"
+ARG GO_VERSION="1.26.10"
 RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
     && tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz \
     && rm go${GO_VERSION}.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 
 # Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.14.5 3.13.9 3.12.9 3.11.14 3.10.19 3.9.25 3.8.20 3.7.17"
+ARG PYTHON_VERSIONS="3.15.0 3.14.9 3.13.17 3.12.15 3.11.17 3.10.22 3.9.25 3.8.20 3.7.17"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \

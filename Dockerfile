@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     libgles2-mesa-dev \
     zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev libgbm-dev \
+    liblzma-dev libmpdec-dev uuid-dev tk-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Compile and install OpenSSL 1.1.1 from source (kzalewski fork: 1.1.1zh with backported security fixes)
@@ -37,6 +38,17 @@ RUN wget https://github.com/kzalewski/openssl-1.1.1/archive/refs/tags/1.1.1zh.ta
     && make install_sw install_ssldirs \
     && ldconfig \
     && cd .. && rm -rf openssl-1.1.1*
+
+# Point OpenSSL's compiled-in CA paths at the system CA bundle.
+# OpenSSL installs to /usr/local/ssl, so its default cafile/capath
+# (/usr/local/ssl/cert.pem, /usr/local/ssl/certs) are empty and every Python
+# built against it fails HTTPS certificate verification. The distro bundle
+# lives at /etc/ssl/certs/ca-certificates.crt - link it into place.
+RUN ln -sf /etc/ssl/certs/ca-certificates.crt /usr/local/ssl/cert.pem \
+    && ln -sf /etc/ssl/certs/ca-certificates.crt /usr/local/ssl/certs/ca-certificates.crt \
+    && echo "Checking CA bundle is usable by OpenSSL:" \
+    && openssl verify /etc/ssl/certs/ca-certificates.crt >/dev/null \
+    && echo "CA bundle OK"
 
 # Install Node.js 26 (unofficial build compatible with glibc 2.17)
 # NOTE: v26.10.0 is the last release shipping a linux-x64-glibc-217 build; v26.11.0+ dropped it.
@@ -61,16 +73,44 @@ RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
 ENV PATH=$PATH:/usr/local/go/bin
 
 # Install multiple Python versions with SSL support
+#
+# Extra configure flags needed on xenial (both are version-gated so they are
+# ignored on the older Pythons that do not understand them):
+#  * --without-system-libmpdec: CPython 3.13+ auto-detects the system libmpdec
+#    and requires >= 2.5.0, but xenial ships 2.4.2. Without this flag `_decimal`
+#    is silently dropped and `decimal` falls back to the (10-100x slower)
+#    pure-Python implementation. The bundled libmpdec in the CPython tarball
+#    is used instead.
+#  * TCLTK_CFLAGS/TCLTK_LIBS: xenial's tcl8.6-dev/tk8.6-dev ship no .pc files,
+#    so CPython's pkg-config probe fails and `_tkinter` is skipped.
+#
+# KNOWN LIMITATION: `_sqlite3` is missing from 3.13+ because xenial's SQLite
+# (3.11.0) is older than the 3.15.2 that CPython 3.13+ requires. `import
+# sqlite3` therefore raises ModuleNotFoundError on 3.13/3.14/3.15. Python
+# 3.12 and earlier are unaffected.
 ARG PYTHON_VERSIONS="3.15.0 3.14.9 3.13.17 3.12.15 3.11.17 3.10.22 3.9.25 3.8.20 3.7.17"
 RUN for version in $PYTHON_VERSIONS; do \
         wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
         tar -xf Python-$version.tgz && \
         cd Python-$version && \
-        ./configure --enable-optimizations  && \
+        extra_flags=""; \
+        if ./configure --help | grep -q -- '--without-system-libmpdec'; then \
+            extra_flags="--without-system-libmpdec"; \
+        fi; \
+        ./configure --enable-optimizations $extra_flags \
+            TCLTK_CFLAGS="-I/usr/include/tcl8.6" TCLTK_LIBS="-ltk8.6 -ltcl8.6" && \
         make -j$(nproc) && \
         make altinstall && \
         cd .. && \
         rm -rf Python-$version*; \
+    done
+
+# Fail the build if a module we expect to be present is missing, so silent
+# regressions surface at build time instead of at import time in user code.
+RUN for version in $PYTHON_VERSIONS; do \
+        short=${version%.*}; \
+        echo "Verifying optional modules for Python $short..."; \
+        python$short -c "import _lzma, _uuid, _decimal, _tkinter" || exit 1; \
     done
 
 # Install SDL

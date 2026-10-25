@@ -68,6 +68,16 @@ don't know those options).
 ### CI/CD Integration
 The project uses GitHub Actions (.github/workflows/docker.yml) to automatically build and push images to Docker Hub when changes are made to the main branch. The workflow builds both architectures in parallel using a matrix strategy.
 
+### PyPy 3.12 is built from source
+No official PyPy 3.12 build runs on xenial: PyPy >= 8.0 (the first 3.12 series) is
+built in `manylinux_2_28` and needs glibc >= 2.27 (xenial has 2.23). The layer
+therefore translates PyPy from source using the PyPy 2.7 binary as host
+interpreter (`RPython` is Python 2 code). That step costs **~23 min and ~4.5 GB
+RAM per architecture** — keep that in mind for CI runners and for `taskset`/CPU
+throttling. Result: `python3.12` + `pypy3.12` + `pip-pypy3.12`; the `sqlite3`
+cffi module is unavailable because xenial's SQLite (3.11) is older than PyPy
+requires.
+
 ### Development Libraries Included
 - OpenGL (Mesa)
 - X11 windowing system

@@ -25,14 +25,16 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     lsb-release \
     libgles2-mesa-dev \
-    zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev libgbm-dev \
+    zlib1g-dev libncurses-dev libgdbm-dev libnss3-dev libreadline6-dev libffi-dev libsqlite3-dev libbz2-dev liblzma-dev libgbm-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Compile and install OpenSSL 1.1.1 from source (kzalewski fork: 1.1.1zh with backported security fixes)
+# --openssldir=/etc/ssl so that clients built against it (Python) find the distro CA
+# bundle: the OpenSSL default is /usr/local/ssl, whose certs/ dir is empty.
 RUN wget https://github.com/kzalewski/openssl-1.1.1/archive/refs/tags/1.1.1zh.tar.gz -O openssl-1.1.1zh.tar.gz \
     && tar -xzf openssl-1.1.1zh.tar.gz \
     && cd openssl-1.1.1-1.1.1zh \
-    && ./config \
+    && ./config --openssldir=/etc/ssl \
     && make -j$(nproc) \
     && make install_sw install_ssldirs \
     && ldconfig \
@@ -161,6 +163,34 @@ RUN wget https://downloads.python.org/pypy/pypy3.10-v7.3.19-linux64.tar.bz2 \
     && ln -s /opt/pypy3.10-v7.3.19-linux64/bin/pip3 /usr/local/bin/pip-pypy3.10 \
     && ln -s /opt/pypy3.11-v7.3.20-linux64/bin/pip3 /usr/local/bin/pip-pypy3.11 \
     && rm pypy3.10-v7.3.19-linux64.tar.bz2 pypy3.11-v7.3.20-linux64.tar.bz2
+
+# Install PyPy 3.12 by translating it from source.
+# No official PyPy 3.12 build runs here: PyPy >= 8.0 (the first 3.12 series) is
+# built in manylinux_2_28 and needs glibc >= 2.27, while xenial has 2.23.
+# RPython is Python 2 code, so the PyPy 2.7 binary is used as host interpreter
+# (much faster than CPython2.7). Costs ~25 min and ~4.5 GB RAM.
+# cffi modules that cannot be built on xenial are skipped, not fatal:
+#   sqlite3 (xenial SQLite 3.11 < PyPy's requirement), curses (no
+#   libncursesw symlink), tkinter (no tk-dev).
+ARG PYPY3_12_VERSION="8.0.1"
+ARG PYPY2_7_VERSION="7.3.19"
+RUN cd /tmp \
+    && wget -q https://downloads.python.org/pypy/pypy2.7-v${PYPY2_7_VERSION}-linux64.tar.bz2 \
+    && wget -q https://downloads.python.org/pypy/pypy3.12-v${PYPY3_12_VERSION}-src.tar.gz \
+    && tar -xjf pypy2.7-v${PYPY2_7_VERSION}-linux64.tar.bz2 -C /opt \
+    && tar -xzf pypy3.12-v${PYPY3_12_VERSION}-src.tar.gz \
+    && cd pypy3.12-v${PYPY3_12_VERSION}-src/pypy/goal \
+    && /opt/pypy2.7-v${PYPY2_7_VERSION}-linux64/bin/pypy ../../rpython/bin/rpython --make-jobs "$(nproc)" -Ojit targetpypystandalone.py \
+    && mkdir -p /opt/pypy3.12-v${PYPY3_12_VERSION}-linux64/bin \
+    && cp pypy3.12-c /opt/pypy3.12-v${PYPY3_12_VERSION}-linux64/bin/pypy3 \
+    && cp libpypy3.12-c.so /opt/pypy3.12-v${PYPY3_12_VERSION}-linux64/bin/ \
+    && cd ../.. \
+    && cp -r lib-python lib_pypy include /opt/pypy3.12-v${PYPY3_12_VERSION}-linux64/ \
+    && ln -s /opt/pypy3.12-v${PYPY3_12_VERSION}-linux64/bin/pypy3 /usr/local/bin/pypy3.12 \
+    && pypy3.12 -m ensurepip \
+    && ln -s /opt/pypy3.12-v${PYPY3_12_VERSION}-linux64/bin/pip3 /usr/local/bin/pip-pypy3.12 \
+    && rm -rf /opt/pypy2.7-v${PYPY2_7_VERSION}-linux64 /tmp/pypy3.12-v${PYPY3_12_VERSION}-src* \
+        /tmp/pypy2.7-v${PYPY2_7_VERSION}-linux64.tar.bz2 /tmp/usession-release-pypy3.12-*
 
 # Set working directory
 WORKDIR /workspace

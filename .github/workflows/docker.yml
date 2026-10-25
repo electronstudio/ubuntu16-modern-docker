@@ -54,8 +54,14 @@ jobs:
         context: .
         file: ${{ matrix.dockerfile }}
         platforms: ${{ matrix.platform }}
+        # CI gets PGO'd interpreters (~2x python build time, ~10-20% faster);
+        # the Dockerfiles default it off so local builds stay quick.
+        build-args: |
+          PYTHON_ENABLE_PGO=1
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        # Separate cache scope per architecture: with the default scope both
+        # matrix jobs overwrite each other's cache on every run.
+        cache-from: type=gha,scope=${{ matrix.tag }}
+        cache-to: type=gha,scope=${{ matrix.tag }},mode=max

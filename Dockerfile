@@ -60,18 +60,83 @@ RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
     && rm go${GO_VERSION}.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 
-# Install multiple Python versions with SSL support
-ARG PYTHON_VERSIONS="3.15.0 3.14.9 3.13.17 3.12.15 3.11.17 3.10.22 3.9.25 3.8.20 3.7.17"
-RUN for version in $PYTHON_VERSIONS; do \
-        wget https://www.python.org/ftp/python/$version/Python-$version.tgz && \
-        tar -xf Python-$version.tgz && \
-        cd Python-$version && \
-        ./configure --enable-optimizations  && \
-        make -j$(nproc) && \
-        make altinstall && \
-        cd .. && \
-        rm -rf Python-$version*; \
-    done
+# Install multiple Python versions with SSL support.
+#
+# Each version is built in its own layer: bumping one version only rebuilds that
+# version instead of all of them.
+#
+# PGO (--enable-optimizations) is OFF by default to keep image builds fast;
+# CI enables it with --build-arg PYTHON_ENABLE_PGO=1. It costs ~2x compile time
+# per version and buys ~10-20% interpreter speed. It stays skipped on 3.7 even
+# when enabled: 3.7's PGO training workload is the *full* test suite (the cheap
+# --pgo subset only exists on 3.8+), making it by far the slowest version.
+#
+# /usr/local/lib/build-cpython always configures with:
+#   --disable-test-modules      don't build nor install the test modules.
+#   --without-static-libpython  skip libpython.a (only needed to embed).
+# Neither option exists before 3.10; older configure scripts emit
+# "WARNING: unrecognized options" and ignore them (still exit 0, verified
+# against the 3.7.17 and 3.9.25 tarballs).
+ARG PYTHON_SETARCH=""
+ARG PYTHON_ENABLE_PGO="0"
+RUN printf '%s\n' \
+        '#!/bin/sh' \
+        'set -eu' \
+        'set -x' \
+        '' \
+        'version="$1"' \
+        'major="${version%%.*}"' \
+        'minor="${version#*.}"' \
+        'minor="${minor%%.*}"' \
+        '' \
+        'flags="--disable-test-modules --without-static-libpython"' \
+        'if [ "${PYTHON_ENABLE_PGO:-0}" = "1" ]; then' \
+        '    if [ "$major" -eq 3 ] && [ "$minor" -le 7 ]; then' \
+        '        echo "Python 3.7: skipping --enable-optimizations (slow full-suite PGO)"' \
+        '    else' \
+        '        flags="$flags --enable-optimizations"' \
+        '    fi' \
+        'fi' \
+        '' \
+        'cd /tmp' \
+        'rm -rf "Python-$version" "Python-$version.tgz"' \
+        'wget -q "https://www.python.org/ftp/python/$version/Python-$version.tgz"' \
+        'tar -xf "Python-$version.tgz"' \
+        'cd "Python-$version"' \
+        '${PYTHON_SETARCH:-} ./configure $flags' \
+        'make -j"$(nproc)"' \
+        '${PYTHON_SETARCH:-} make altinstall' \
+        'cd /tmp' \
+        'rm -rf "Python-$version" "Python-$version.tgz"' \
+        > /usr/local/lib/build-cpython \
+    && chmod +x /usr/local/lib/build-cpython
+
+ARG PYTHON_VERSION_3_15="3.15.0"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_15"
+
+ARG PYTHON_VERSION_3_14="3.14.9"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_14"
+
+ARG PYTHON_VERSION_3_13="3.13.17"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_13"
+
+ARG PYTHON_VERSION_3_12="3.12.15"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_12"
+
+ARG PYTHON_VERSION_3_11="3.11.17"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_11"
+
+ARG PYTHON_VERSION_3_10="3.10.22"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_10"
+
+ARG PYTHON_VERSION_3_9="3.9.25"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_9"
+
+ARG PYTHON_VERSION_3_8="3.8.20"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_8"
+
+ARG PYTHON_VERSION_3_7="3.7.17"
+RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_7"
 
 # Install SDL
 ARG SDL_VERSION="2.32.10"
@@ -80,7 +145,7 @@ RUN wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-$SDL_VERSIO
     && mkdir build \
     && cd build \
     && cmake ../SDL-release-$SDL_VERSION -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build . --config Release \
+    && cmake --build . --config Release --parallel "$(nproc)" \
     && cmake --install . \
     && cd .. && rm -rf build SDL-release-$SDL_VERSION release-$SDL_VERSION.tar.gz
 

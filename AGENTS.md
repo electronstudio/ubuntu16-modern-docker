@@ -54,6 +54,17 @@ docker run -it \
 - `Dockerfile.i386`: 32-bit build
 - Both include the same development libraries and tools
 
+### Python build layers
+Each Python version is pinned and built in its own layer via
+`ARG PYTHON_VERSION_3_X` + `RUN /usr/local/lib/build-cpython "$PYTHON_VERSION_3_X"`,
+so bumping one version only rebuilds that layer. The `/usr/local/lib/build-cpython`
+helper (generated in the Dockerfile) chooses configure flags by version:
+`--enable-optimizations` only when `--build-arg PYTHON_ENABLE_PGO=1` (default
+`0` = off for fast local builds; CI passes `1`) and never on 3.7 (slow
+full-test-suite PGO), plus `--disable-test-modules --without-static-libpython`
+for every version (ignored with a warning by pre-3.10 configure scripts, which
+don't know those options).
+
 ### CI/CD Integration
 The project uses GitHub Actions (.github/workflows/docker.yml) to automatically build and push images to Docker Hub when changes are made to the main branch. The workflow builds both architectures in parallel using a matrix strategy.
 
